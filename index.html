@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+<title>F1 Pulse</title>
+
+<style>
+body{
+background:black;
+color:white;
+font-family:Arial;
+text-align:center;
+}
+
+.driver{
+padding:10px;
+margin:10px;
+background:#1c1c1c;
+border-radius:10px;
+}
+</style>
+
+</head>
+
+<body>
+
+<h1>F1 Pulse</h1>
+
+<div id="drivers"></div>
+
+<script>
+
+const drivers = [
+{pos:1,name:"Max Verstappen"},
+{pos:2,name:"Charles Leclerc"},
+{pos:3,name:"Lando Norris"}
+];
+
+const container = document.getElementById("drivers");
+
+drivers.forEach(d=>{
+container.innerHTML += `<div class="driver">P${d.pos} - ${d.name}</div>`;
+});
+
+</script>
+
+</body>
+
+</html>
