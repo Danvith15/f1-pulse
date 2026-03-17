@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>F1 Pulse Dashboard</title>
+
+<style>
+body {
+  margin: 0;
+  font-family: Arial;
+  background: #0a0a0a;
+  color: white;
+}
+
+header {
+  background: black;
+  padding: 15px;
+  text-align: center;
+  color: red;
+  font-size: 24px;
+  font-weight: bold;
+}
+
+.container {
+  padding: 15px;
+}
+
+.card {
+  background: #1a1a1a;
+  padding: 15px;
+  margin-bottom: 15px;
+  border-radius: 10px;
+}
+
+.leaderboard div {
+  display: flex;
+  justify-content: space-between;
+  padding: 8px;
+  border-bottom: 1px solid #333;
+}
+
+.pulse-bar {
+  height: 20px;
+  background: #333;
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.pulse-fill {
+  height: 100%;
+  width: 20%;
+  background: red;
+}
+
+.event {
+  margin: 5px 0;
+  color: #ccc;
+}
+</style>
+</head>
+
+<body>
+
+<header>F1 Pulse Dashboard</header>
+
+<div class="container">
+
+  <div class="card">
+    <h2>Race Pulse</h2>
+    <div class="pulse-bar">
+      <div id="pulse" class="pulse-fill"></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>Live Leaderboard</h2>
+    <div id="leaderboard"></div>
+  </div>
+
+  <div class="card">
+    <h2>Race Events</h2>
+    <div id="events"></div>
+  </div>
+
+</div>
+
+<script>
+
+// STEP 1: Get latest race session
+async function getSession(){
+  const res = await fetch("https://api.openf1.org/v1/sessions");
+  const data = await res.json();
+
+  let race = data.reverse().find(s => s.session_name === "Race");
+  return race ? race.session_key : null;
+}
+
+// STEP 2: Get positions
+async function getPositions(sessionKey){
+  const res = await fetch(`https://api.openf1.org/v1/position?session_key=${sessionKey}`);
+  return await res.json();
+}
+
+// STEP 3: Render leaderboard
+function renderLeaderboard(drivers){
+  let board = document.getElementById("leaderboard");
+  board.innerHTML = "";
+
+  drivers.slice(0,10).forEach(d=>{
+    board.innerHTML += `
+      <div>
+        <span>P${d.position} Driver ${d.driver_number}</span>
+        <span>${d.gap_to_leader ?? "Leader"}</span>
+      </div>
+    `;
+  });
+}
+
+// STEP 4: Pulse calculation
+function updatePulse(drivers){
+  let close = drivers.filter(d => d.gap_to_leader && d.gap_to_leader < 2);
+  let value = Math.min(100, close.length * 20);
+  document.getElementById("pulse").style.width = value + "%";
+}
+
+// STEP 5: Events
+function addEvent(text){
+  let events = document.getElementById("events");
+  events.innerHTML = `<div class="event">⚡ ${text}</div>` + events.innerHTML;
+}
+
+// STEP 6: Load everything
+async function loadLiveData(){
+  const sessionKey = await getSession();
+
+  if(!sessionKey){
+    addEvent("No active race session");
+    return;
+  }
+
+  const drivers = await getPositions(sessionKey);
+
+  renderLeaderboard(drivers);
+  updatePulse(drivers);
+
+  addEvent("Live data updated");
+}
+
+// AUTO UPDATE
+setInterval(loadLiveData, 10000);
+
+// FIRST LOAD
+loadLiveData();
+
+</script>
+
+</body>
+</html>
